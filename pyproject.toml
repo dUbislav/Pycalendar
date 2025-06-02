@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=65.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pycalendar"
+version = "1.0.0"
+description = "Python Calendar Application"
+authors = [{name = "Your Name"}]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "PyQt5>=5.15",
+    "python-dateutil>=2.8",
+    "pytz>=2023.3"
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+    "pytest-qt>=4.0",
+    "pytest-cov>=4.0"
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["src/pycalendar/tests"]
+addopts = "--cov=src/pycalendar/core --cov-report=term-missing -v"
+filterwarnings = [
+    "ignore::DeprecationWarning"
+]
+
+[tool.coverage.run]
+source = ["src/pycalendar"]
+omit = [
+    "*/gui/*",
+    "*/tests/*"
+]
