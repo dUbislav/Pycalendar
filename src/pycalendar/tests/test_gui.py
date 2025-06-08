@@ -14,3 +14,10 @@ def test_main_window_init(qapp):
     window = MainWindow()
     assert window.windowTitle() == "PyCalendar"
     assert window.calendar is not None
+
+@pytest.fixture
+def main_window(qtbot):
+    window = MainWindow()
+    qtbot.addWidget(window)
+    yield window
+    window.close()

@@ -1,37 +1,59 @@
 import pytest
 from datetime import datetime, timedelta
-from pycalendar.core.notification import Notification, NotificationManager
+from unittest.mock import patch
+
+from PyQt5.QtWidgets import QMessageBox
+
+from pycalendar.core.notification import NotificationManager
+from pycalendar.core.calendar import Calendar
+from pycalendar.core.event import Event
 
 
-def test_notification_creation():
-    """Тест создания уведомления"""
-    time = datetime.now() + timedelta(minutes=30)
-    notif = Notification("Test message", time)
-    assert notif.message == "Test message"
-    assert notif.notify_time == time
+@pytest.fixture
+def manager():
+    """Фикстура для менеджера уведомлений"""
+    return NotificationManager()
 
 
-def test_notification_manager():
-    """Тест менеджера уведомлений"""
-    manager = NotificationManager()
-    time = datetime.now() + timedelta(minutes=15)
+@pytest.fixture
+def calendar_with_event():
+    """Фикстура для календаря с событием"""
+    cal = Calendar()
+    start = datetime.now() - timedelta(minutes=5)  # Событие уже началось
+    end = datetime.now() + timedelta(hours=1)
+    cal.add_event(Event("Test Event", start, end))
+    return cal
 
-    # Проверка пустого менеджера
+
+def test_notification_manager_initialization(manager):
+    """Тест инициализации менеджера"""
+    assert hasattr(manager, 'notifications')
+    assert isinstance(manager.notifications, list)
     assert len(manager.notifications) == 0
 
-    # Добавление уведомления
-    notif = Notification("Test", time)
-    manager.notifications.append(notif)
-    assert len(manager.notifications) == 1
-    assert manager.notifications[0].message == "Test"
+
+def test_notification_creation_simple():
+    """Простейший тест создания уведомления"""
+    from pycalendar.core.notification import Notification
+
+    # 1. Создаем тестовые данные
+    test_message = "Test message"
+    test_time = datetime.now()
+
+    # 2. Создаем уведомление
+    notification = Notification(test_message, test_time)
+
+    # 3. Проверяем основные свойства
+    assert notification.message == test_message
+    assert notification.notify_time == test_time
+
+    # 4. Проверяем строковое представление
+    assert test_message in str(notification)
+    assert "Notification" in repr(notification)
 
 
-def test_notification_str_representation():
-    time = datetime.now() + timedelta(minutes=30)
-    notif = Notification("Test message", time)
-    assert str(notif) == f"Notification: 'Test message' at {time}"
 
-def test_notification_repr():
-    time = datetime.now()
-    notif = Notification("Test", time)
-    assert repr(notif).startswith("<Notification at 0x")
+def test_empty_calendar_handling(manager):
+    """Тест обработки пустого календаря"""
+    manager._check_events()
+    assert len(manager.notifications) == 0

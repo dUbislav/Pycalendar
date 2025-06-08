@@ -1,5 +1,8 @@
 from datetime import datetime
 from typing import List
+
+import timedelta
+
 from .event import Event
 
 class Calendar:
@@ -27,3 +30,11 @@ class Calendar:
     def __repr__(self):
         return f"<Calendar at {hex(id(self))}>"
 
+    def get_upcoming_events(self, minutes=15):
+        """Возвращает события, которые начнутся в ближайшие N минут"""
+        now = datetime.now()
+        time_threshold = now + timedelta(minutes=minutes)
+        return [
+            event for event in self._events  # Исправлено на self._events
+            if now <= event.start_time <= time_threshold
+        ]
