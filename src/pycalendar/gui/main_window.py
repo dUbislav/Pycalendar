@@ -1,3 +1,5 @@
+import traceback
+
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout,
                              QCalendarWidget, QListWidget, QPushButton,
                              QLineEdit, QTimeEdit, QMessageBox, QHBoxLayout, QLabel)
@@ -57,32 +59,40 @@ class MainWindow(QMainWindow):
         self.update_events()  # Первоначальное обновление
 
     def add_event(self):
-        """Добавление нового события"""
         try:
+            # Получаем и проверяем название
             title = self.title_input.text().strip()
             if not title:
-                raise ValueError("Event title cannot be empty")
+                raise ValueError("Please enter event title")
 
+            # Получаем дату и время
             date = self.calendar_widget.selectedDate()
-            start = datetime.combine(
-                date.toPyDate(),
-                self.start_time.time().toPyTime()
-            )
-            end = datetime.combine(
-                date.toPyDate(),
-                self.end_time.time().toPyTime()
-            )
+            start_time = self.start_time.time()
+            end_time = self.end_time.time()
 
-            if start >= end:
+            # Проверяем время
+            if start_time >= end_time:
                 raise ValueError("End time must be after start time")
 
+            # Создаем datetime объекты
+            start = datetime.combine(date.toPyDate(), start_time.toPyTime())
+            end = datetime.combine(date.toPyDate(), end_time.toPyTime())
+
+            # Создаем и добавляем событие
             event = Event(title, start, end)
             self.calendar.add_event(event)
+
+            # Обновляем интерфейс
             self.update_events()
             self.title_input.clear()
 
+            QMessageBox.information(self, "Success", "Event added successfully")
+
+        except ValueError as e:
+            QMessageBox.warning(self, "Input Error", str(e))
         except Exception as e:
-            QMessageBox.warning(self, "Error", str(e))
+            QMessageBox.critical(self, "Error", f"Failed to add event: {str(e)}")
+            print(f"Error adding event: {traceback.format_exc()}")
 
     def update_events(self):
         """Обновление списка событий для выбранной даты"""
@@ -93,7 +103,7 @@ class MainWindow(QMainWindow):
 
         for event in self.calendar.get_events(start, end):
             self.event_list.addItem(
-                f"{event.name} ({event.start_time.strftime('%H:%M')}-{event.end_time.strftime('%H:%M')})"
+                f"{event.title} ({event.start_time.strftime('%H:%M')}-{event.end_time.strftime('%H:%M')})"
             )
 
     def init_notifications(self):
@@ -118,13 +128,13 @@ class MainWindow(QMainWindow):
             if now <= event.start_time <= upcoming_threshold:
                 self.show_notification(
                     "Скоро событие",
-                    f"{event.name}\nНачнется в {event.start_time.strftime('%H:%M')}"
+                    f"{event.title}\nНачнется в {event.start_time.strftime('%H:%M')}"
                 )
             # Уведомление о текущем событии
             elif event.start_time <= now <= event.end_time:
                 self.show_notification(
                     "Текущее событие",
-                    f"{event.name}\nИдет до {event.end_time.strftime('%H:%M')}"
+                    f"{event.title}\nИдет до {event.end_time.strftime('%H:%M')}"
                 )
 
     def show_notification(self, title, message):
